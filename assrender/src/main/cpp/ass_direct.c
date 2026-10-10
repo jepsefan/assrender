@@ -144,15 +144,12 @@ int ass_direct_render(AssDirectContext *ctx, int64_t time_ms, uint8_t *out_pixel
                 src += img->stride;
                 continue;
             }
-            uint8_t *dst = out_pixels + ((img->dst_y + y) * ctx->width + img->dst_x) * 4;
             for (int x = 0; x < img->w; x++) {
-                if (img->dst_x + x < 0 || img->dst_x + x >= ctx->width) {
-                    dst += 4;
-                    continue;
-                }
+                const int pixel_x = img->dst_x + x;
+                if (pixel_x < 0 || pixel_x >= ctx->width) continue;
+                uint8_t *dst = out_pixels + ((img->dst_y + y) * ctx->width + pixel_x) * 4;
                 uint8_t alpha = (uint8_t)(((uint32_t)src[x] * a) >> 8);
                 if (alpha == 0) {
-                    dst += 4;
                     continue;
                 }
 
@@ -169,7 +166,6 @@ int ass_direct_render(AssDirectContext *ctx, int64_t time_ms, uint8_t *out_pixel
                     dst[2] = (uint8_t)((alpha * b + inv * dst[2]) / 255);
                     dst[3] = (uint8_t)(alpha + (inv * dst_a) / 255);
                 }
-                dst += 4;
             }
             src += img->stride;
         }
