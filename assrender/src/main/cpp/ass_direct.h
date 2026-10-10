@@ -44,6 +44,9 @@ int ass_direct_render(AssDirectContext *ctx, int64_t time_ms, uint8_t *out_pixel
  */
 void ass_direct_process_data(AssDirectContext *ctx, const char *data, int size);
 
+/** Load a complete external ASS/SSA script including styles and timed events. */
+int ass_direct_load_script(AssDirectContext *ctx, const char *data, int size);
+
 /**
  * Flush all events (e.g. on seek or track change).
  */
