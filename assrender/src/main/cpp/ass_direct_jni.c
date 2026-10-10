@@ -125,3 +125,17 @@ Java_io_github_assrender_AssDirectBridge_nativeDestroy(
     AssDirectContext *ctx = (AssDirectContext *)(intptr_t)handle;
     ass_direct_destroy(ctx);
 }
+
+JNIEXPORT jint JNICALL
+Java_io_github_assrender_AssDirectBridge_nativeLoadScript(
+        JNIEnv *env, jobject thiz, jlong handle, jbyteArray script) {
+    (void)thiz;
+    AssDirectContext *ctx = (AssDirectContext *)(intptr_t)handle;
+    if (!ctx || !script) return -1;
+    jsize size = (*env)->GetArrayLength(env, script);
+    jbyte *data = (*env)->GetByteArrayElements(env, script, NULL);
+    if (!data) return -1;
+    int result = ass_direct_load_script(ctx, (const char *)data, size);
+    (*env)->ReleaseByteArrayElements(env, script, data, JNI_ABORT);
+    return result;
+}
