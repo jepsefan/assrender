@@ -27,7 +27,7 @@ jobs:
           yes | "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" "ndk;27.2.12479018" "cmake;3.22.1"
       - name: Build native libraries for both ABIs
         env:
-          ANDROID_NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.2.12479018
+          ANDROID_NDK_HOME: /usr/local/lib/android/sdk/ndk/27.2.12479018
         run: |
           bash scripts/build-libass.sh arm64
           bash scripts/build-libass.sh arm
