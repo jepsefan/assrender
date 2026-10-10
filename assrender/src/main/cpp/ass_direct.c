@@ -136,7 +136,17 @@ int ass_direct_render(AssDirectContext *ctx, int64_t time_ms, uint8_t *out_pixel
         static int64_t last_empty_log_second = -1;
         if (time_ms / 1000 != last_empty_log_second) {
             last_empty_log_second = time_ms / 1000;
-            LOGI("ASS frame empty: time=%lldms events=%d", (long long)time_ms, ctx->ass_track->n_events);
+            int active = 0;
+            int first_active_style = -1;
+            for (int i = 0; i < ctx->ass_track->n_events; ++i) {
+                ASS_Event *event = &ctx->ass_track->events[i];
+                if (event->Start <= time_ms && time_ms < event->Start + event->Duration) {
+                    ++active;
+                    if (first_active_style < 0) first_active_style = event->Style;
+                }
+            }
+            LOGI("ASS frame empty: time=%lldms events=%d active=%d first_active_style=%d",
+                 (long long)time_ms, ctx->ass_track->n_events, active, first_active_style);
         }
         return 0;
     }
