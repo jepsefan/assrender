@@ -31,13 +31,13 @@ jobs:
         run: |
           bash scripts/build-libass.sh arm64
           bash scripts/build-libass.sh arm
-          bash scripts/build-ffmpeg.sh arm64
-          bash scripts/build-ffmpeg.sh arm
       - name: Package required native libraries
         run: |
           for abi in arm64-v8a armeabi-v7a; do
             mkdir -p "assrender/src/main/jniLibs/$abi"
-            cp prebuilt/$abi/lib/*.so* "assrender/src/main/jniLibs/$abi/"
+            for lib in ass freetype fribidi harfbuzz; do
+              cp "prebuilt/$abi/lib/lib$lib.so" "assrender/src/main/jniLibs/$abi/"
+            done
           done
       - name: Assemble release AAR
         run: bash ./gradlew :assrender:assembleRelease --stacktrace
