@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <android/log.h>
 #include <ass/ass.h>
 
@@ -49,9 +50,14 @@ AssDirectContext *ass_direct_init(int width, int height, float font_scale) {
     ass_set_storage_size(ctx->ass_renderer, width, height);
     ass_set_frame_size(ctx->ass_renderer, width, height);
     ass_set_font_scale(ctx->ass_renderer, (double)font_scale);
-    // Use fontconfig to discover system fonts (including CJK fallbacks)
-    ass_set_fonts(ctx->ass_renderer, NULL, "sans-serif",
-                  ASS_FONTPROVIDER_AUTODETECT, NULL, 1);
+    // Android normally has no fontconfig provider. Supply an actual system
+    // font file instead of relying on AUTODETECT, which can yield no glyphs.
+    const char *font_path = "/system/fonts/Roboto-Regular.ttf";
+    if (access(font_path, R_OK) != 0) font_path = "/system/fonts/NotoSans-Regular.ttf";
+    if (access(font_path, R_OK) != 0) font_path = NULL;
+    ass_set_fonts(ctx->ass_renderer, font_path, "sans-serif",
+                  ASS_FONTPROVIDER_NONE, NULL, 1);
+    LOGI("ASS font provider: NONE, default font path: %s", font_path ? font_path : "(missing)");
 
     LOGI("ass_direct initialized: %dx%d, font_scale=%.2f (with system fonts)", width, height, font_scale);
     return ctx;
@@ -86,6 +92,11 @@ int ass_direct_load_script(AssDirectContext *ctx, const char *data, int size) {
     if (ctx->ass_track) ass_free_track(ctx->ass_track);
     ctx->ass_track = track;
     LOGI("ASS script loaded: %d events, %d styles", track->n_events, track->n_styles);
+    if (track->n_events > 0) {
+        ASS_Event *e = &track->events[0];
+        LOGI("First event: start=%lldms duration=%lldms style=%d",
+             (long long)e->Start, (long long)e->Duration, e->Style);
+    }
     return 0;
 }
 
@@ -94,9 +105,7 @@ void ass_direct_add_font(AssDirectContext *ctx, const char *name,
     if (!ctx || !data || data_size <= 0) return;
     ass_add_font(ctx->ass_library, name, (char *)data, data_size);
 
-    // Re-configure fonts after adding
-    ass_set_fonts(ctx->ass_renderer, NULL, "sans-serif",
-                  ASS_FONTPROVIDER_AUTODETECT, NULL, 1);
+    // Embedded fonts are registered with the libass library and remain available.
 
     LOGI("Added font: %s (%d bytes)", name ? name : "unnamed", data_size);
 }
