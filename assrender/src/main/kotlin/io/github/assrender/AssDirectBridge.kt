@@ -20,6 +20,9 @@ object AssDirectBridge {
     /** Load ASS header (codec private data from Format.initializationData). */
     external fun nativeLoadHeader(handle: Long, headerData: ByteArray): Int
 
+    /** Load a complete external ASS/SSA script, including its styles and events. */
+    external fun nativeLoadScript(handle: Long, script: ByteArray): Int
+
     /** Add a font attachment. */
     external fun nativeAddFont(handle: Long, name: String?, fontData: ByteArray)
 
