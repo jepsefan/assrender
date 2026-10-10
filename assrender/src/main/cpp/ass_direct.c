@@ -51,7 +51,7 @@ AssDirectContext *ass_direct_init(int width, int height, float font_scale) {
     ass_set_font_scale(ctx->ass_renderer, (double)font_scale);
     // Use fontconfig to discover system fonts (including CJK fallbacks)
     ass_set_fonts(ctx->ass_renderer, NULL, "sans-serif",
-                  ASS_FONTPROVIDER_FONTCONFIG, NULL, 1);
+                  ASS_FONTPROVIDER_AUTODETECT, NULL, 1);
 
     LOGI("ass_direct initialized: %dx%d, font_scale=%.2f (with system fonts)", width, height, font_scale);
     return ctx;
