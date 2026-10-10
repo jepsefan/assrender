@@ -79,6 +79,15 @@ int ass_direct_load_header(AssDirectContext *ctx, const char *header_data, int h
     return 0;
 }
 
+int ass_direct_load_script(AssDirectContext *ctx, const char *data, int size) {
+    if (!ctx || !data || size <= 0) return -1;
+    ASS_Track *track = ass_read_memory(ctx->ass_library, (char *)data, (size_t)size, NULL);
+    if (!track) return -1;
+    if (ctx->ass_track) ass_free_track(ctx->ass_track);
+    ctx->ass_track = track;
+    return 0;
+}
+
 void ass_direct_add_font(AssDirectContext *ctx, const char *name,
                          const char *data, int data_size) {
     if (!ctx || !data || data_size <= 0) return;
