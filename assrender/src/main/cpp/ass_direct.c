@@ -82,9 +82,10 @@ int ass_direct_load_header(AssDirectContext *ctx, const char *header_data, int h
 int ass_direct_load_script(AssDirectContext *ctx, const char *data, int size) {
     if (!ctx || !data || size <= 0) return -1;
     ASS_Track *track = ass_read_memory(ctx->ass_library, (char *)data, (size_t)size, NULL);
-    if (!track) return -1;
+    if (!track) { LOGE("ASS script parsing failed, bytes=%d", size); return -1; }
     if (ctx->ass_track) ass_free_track(ctx->ass_track);
     ctx->ass_track = track;
+    LOGI("ASS script loaded: %d events, %d styles", track->n_events, track->n_styles);
     return 0;
 }
 
@@ -122,7 +123,10 @@ int ass_direct_render(AssDirectContext *ctx, int64_t time_ms, uint8_t *out_pixel
     // Clear output buffer
     memset(out_pixels, 0, ctx->width * ctx->height * 4);
 
-    if (!img) return 0;
+    if (!img) {
+        LOGI("ASS frame empty: time=%lldms events=%d", (long long)time_ms, ctx->ass_track->n_events);
+        return 0;
+    }
 
     // Composite all ASS_Image layers into the RGBA output buffer
     int has_content = 0;
