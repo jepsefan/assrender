@@ -39,8 +39,22 @@ jobs:
               cp "prebuilt/$abi/lib/lib$lib.so" "assrender/src/main/jniLibs/$abi/"
             done
           done
+      - name: Verify native dependencies
+        run: |
+          for abi in arm64-v8a armeabi-v7a; do
+            for lib in ass freetype fribidi harfbuzz; do
+              test -s "assrender/src/main/jniLibs/$abi/lib$lib.so" || exit 1
+            done
+          done
       - name: Assemble release AAR
         run: bash ./gradlew :assrender:assembleRelease --stacktrace
+      - name: Inspect generated AAR
+        run: |
+          unzip -l assrender/build/outputs/aar/assrender-release.aar | tee aar-contents.txt
+          for abi in arm64-v8a armeabi-v7a; do
+            unzip -Z1 assrender/build/outputs/aar/assrender-release.aar | grep -q "jni/$abi/libassrender.so"
+            unzip -Z1 assrender/build/outputs/aar/assrender-release.aar | grep -q "jni/$abi/libass.so"
+          done
       - uses: actions/upload-artifact@v4
         with:
           name: assrender-android-aar
