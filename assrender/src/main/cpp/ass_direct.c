@@ -124,7 +124,11 @@ int ass_direct_render(AssDirectContext *ctx, int64_t time_ms, uint8_t *out_pixel
     memset(out_pixels, 0, ctx->width * ctx->height * 4);
 
     if (!img) {
-        LOGI("ASS frame empty: time=%lldms events=%d", (long long)time_ms, ctx->ass_track->n_events);
+        static int64_t last_empty_log_second = -1;
+        if (time_ms / 1000 != last_empty_log_second) {
+            last_empty_log_second = time_ms / 1000;
+            LOGI("ASS frame empty: time=%lldms events=%d", (long long)time_ms, ctx->ass_track->n_events);
+        }
         return 0;
     }
 
