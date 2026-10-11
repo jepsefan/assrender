@@ -18,6 +18,8 @@ struct AssDirectContext {
     ASS_Library *ass_library;
     ASS_Renderer *ass_renderer;
     ASS_Track *ass_track;
+    int last_frame_visible;
+    int frame_initialized;
 };
 
 AssDirectContext *ass_direct_init(int width, int height, float font_scale) {
@@ -72,6 +74,7 @@ int ass_direct_load_header(AssDirectContext *ctx, const char *header_data, int h
         ctx->ass_track = NULL;
     }
 
+    ctx->frame_initialized = 0;
     ctx->ass_track = ass_new_track(ctx->ass_library);
     if (!ctx->ass_track) {
         LOGE("Failed to create ASS track");
@@ -91,6 +94,8 @@ int ass_direct_load_script(AssDirectContext *ctx, const char *data, int size) {
     if (!track) { LOGE("ASS script parsing failed, bytes=%d", size); return -1; }
     if (ctx->ass_track) ass_free_track(ctx->ass_track);
     ctx->ass_track = track;
+    ctx->frame_initialized = 0;
+    ctx->last_frame_visible = 0;
     LOGI("ASS script loaded: %d events, %d styles", track->n_events, track->n_styles);
     if (track->n_events > 0) {
         ASS_Event *e = &track->events[0];
@@ -128,6 +133,12 @@ int ass_direct_render(AssDirectContext *ctx, int64_t time_ms, uint8_t *out_pixel
     int changed = 0;
     ASS_Image *img = ass_render_frame(ctx->ass_renderer, ctx->ass_track,
                                       time_ms, &changed);
+
+    // libass reports 0 when the image and positions are unchanged.
+    // Preserve the previous bitmap and skip compositing/PNG encoding.
+    if (ctx->frame_initialized && changed == 0) return ctx->last_frame_visible ? 2 : 0;
+    ctx->frame_initialized = 1;
+    ctx->last_frame_visible = img != NULL;
 
     // Clear output buffer
     memset(out_pixels, 0, ctx->width * ctx->height * 4);
@@ -205,6 +216,8 @@ int ass_direct_render(AssDirectContext *ctx, int64_t time_ms, uint8_t *out_pixel
 void ass_direct_flush(AssDirectContext *ctx) {
     if (!ctx || !ctx->ass_track) return;
     ass_flush_events(ctx->ass_track);
+    ctx->frame_initialized = 0;
+    ctx->last_frame_visible = 0;
     LOGI("Flushed ASS events");
 }
 
