@@ -170,15 +170,13 @@ int ass_direct_render(AssDirectContext *ctx, int64_t time_ms, uint8_t *out_pixel
                     continue;
                 }
 
-                // Straight-alpha source-over; preserve alpha of overlapping layers.
-                const uint32_t dst_a = dst[3];
-                const uint32_t dst_weight = (dst_a * (255u - alpha) + 127u) / 255u;
-                const uint32_t out_a = alpha + dst_weight;
-                if (out_a == 0) continue;
-                dst[0] = (uint8_t)((r * alpha + dst[0] * dst_weight + out_a / 2) / out_a);
-                dst[1] = (uint8_t)((g * alpha + dst[1] * dst_weight + out_a / 2) / out_a);
-                dst[2] = (uint8_t)((b * alpha + dst[2] * dst_weight + out_a / 2) / out_a);
-                dst[3] = (uint8_t)out_a;
+                // Android ARGB_8888 Bitmap pixels use premultiplied RGBA.
+                // Composite each libass layer using premultiplied source-over.
+                const uint32_t inverse_alpha = 255u - alpha;
+                dst[0] = (uint8_t)((r * alpha + dst[0] * inverse_alpha + 127u) / 255u);
+                dst[1] = (uint8_t)((g * alpha + dst[1] * inverse_alpha + 127u) / 255u);
+                dst[2] = (uint8_t)((b * alpha + dst[2] * inverse_alpha + 127u) / 255u);
+                dst[3] = (uint8_t)(alpha + (dst[3] * inverse_alpha + 127u) / 255u);
             }
             src += img->stride;
         }
