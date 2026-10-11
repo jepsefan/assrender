@@ -110,6 +110,21 @@ Java_io_github_assrender_AssDirectBridge_nativeRender(
     return has_content ? JNI_TRUE : JNI_FALSE;
 }
 
+// 0 = empty, 1 = updated bitmap, 2 = unchanged visible bitmap.
+JNIEXPORT jint JNICALL
+Java_io_github_assrender_AssDirectBridge_nativeRenderState(
+        JNIEnv *env, jobject thiz, jlong handle, jlong time_ms, jobject bitmap) {
+    (void)thiz;
+    AssDirectContext *ctx = (AssDirectContext *)(intptr_t)handle;
+    if (!ctx || !bitmap) return 0;
+    void *pixels = NULL;
+    int ret = AndroidBitmap_lockPixels(env, bitmap, &pixels);
+    if (ret != ANDROID_BITMAP_RESULT_SUCCESS) return 0;
+    int state = ass_direct_render(ctx, time_ms, (uint8_t *)pixels);
+    AndroidBitmap_unlockPixels(env, bitmap);
+    return state;
+}
+
 JNIEXPORT void JNICALL
 Java_io_github_assrender_AssDirectBridge_nativeFlush(
         JNIEnv *env, jobject thiz, jlong handle) {
