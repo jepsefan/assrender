@@ -35,6 +35,9 @@ object AssDirectBridge {
     /** Render subtitle frame at given time. Returns true if content rendered. */
     external fun nativeRender(handle: Long, timeMs: Long, bitmap: Bitmap): Boolean
 
+    /** 0 = blank, 1 = updated bitmap, 2 = unchanged visible frame. */
+    external fun nativeRenderState(handle: Long, timeMs: Long, bitmap: Bitmap): Int
+
     /** Flush all events (on seek or track change). */
     external fun nativeFlush(handle: Long)
 
