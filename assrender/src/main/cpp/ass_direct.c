@@ -170,19 +170,15 @@ int ass_direct_render(AssDirectContext *ctx, int64_t time_ms, uint8_t *out_pixel
                     continue;
                 }
 
-                uint8_t dst_a = dst[3];
-                if (dst_a == 0) {
-                    dst[0] = r;
-                    dst[1] = g;
-                    dst[2] = b;
-                    dst[3] = alpha;
-                } else {
-                    uint32_t inv = 255 - alpha;
-                    dst[0] = (uint8_t)((alpha * r + inv * dst[0]) / 255);
-                    dst[1] = (uint8_t)((alpha * g + inv * dst[1]) / 255);
-                    dst[2] = (uint8_t)((alpha * b + inv * dst[2]) / 255);
-                    dst[3] = (uint8_t)(alpha + (inv * dst_a) / 255);
-                }
+                // Straight-alpha source-over; preserve alpha of overlapping layers.
+                const uint32_t dst_a = dst[3];
+                const uint32_t dst_weight = (dst_a * (255u - alpha) + 127u) / 255u;
+                const uint32_t out_a = alpha + dst_weight;
+                if (out_a == 0) continue;
+                dst[0] = (uint8_t)((r * alpha + dst[0] * dst_weight + out_a / 2) / out_a);
+                dst[1] = (uint8_t)((g * alpha + dst[1] * dst_weight + out_a / 2) / out_a);
+                dst[2] = (uint8_t)((b * alpha + dst[2] * dst_weight + out_a / 2) / out_a);
+                dst[3] = (uint8_t)out_a;
             }
             src += img->stride;
         }
