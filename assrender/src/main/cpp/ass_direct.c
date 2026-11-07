@@ -170,13 +170,19 @@ int ass_direct_render(AssDirectContext *ctx, int64_t time_ms, uint8_t *out_pixel
                     continue;
                 }
 
-                // Android ARGB_8888 Bitmap pixels use premultiplied RGBA.
-                // Composite each libass layer using premultiplied source-over.
-                const uint32_t inverse_alpha = 255u - alpha;
-                dst[0] = (uint8_t)((r * alpha + dst[0] * inverse_alpha + 127u) / 255u);
-                dst[1] = (uint8_t)((g * alpha + dst[1] * inverse_alpha + 127u) / 255u);
-                dst[2] = (uint8_t)((b * alpha + dst[2] * inverse_alpha + 127u) / 255u);
-                dst[3] = (uint8_t)(alpha + (dst[3] * inverse_alpha + 127u) / 255u);
+                uint8_t dst_a = dst[3];
+                if (dst_a == 0) {
+                    dst[0] = r;
+                    dst[1] = g;
+                    dst[2] = b;
+                    dst[3] = alpha;
+                } else {
+                    uint32_t inv = 255 - alpha;
+                    dst[0] = (uint8_t)((alpha * r + inv * dst[0]) / 255);
+                    dst[1] = (uint8_t)((alpha * g + inv * dst[1]) / 255);
+                    dst[2] = (uint8_t)((alpha * b + inv * dst[2]) / 255);
+                    dst[3] = (uint8_t)(alpha + (inv * dst_a) / 255);
+                }
             }
             src += img->stride;
         }
